@@ -1,0 +1,261 @@
+//
+//  MapViewController.m
+//  Polygon_App
+//
+//  Created by admin on 11/10/15.
+//  Copyright (c) 2015 admin. All rights reserved.
+//
+
+#import "MapViewController.h"
+#import "PolygonViewController.h"
+#import <CoreLocation/CoreLocation.h>
+#import "AppDelegate.h"
+//#import "PolygonAPI.h"
+
+
+@interface MapViewController ()
+
+{
+//    GMSMarker *maker1;
+    NSString *namethrough;
+    NSString *postalCode;
+    NSString *nameNeighborhood;
+    NSString *nameSublocality;
+    NSString *nameArea;
+    NSString *nameCity;
+    NSString *city;
+    NSString *tapLatitude;
+    NSString *tapLongtitude;
+    NSString *message;
+    NSString *ID;
+    
+}
+
+@end
+
+@implementation MapViewController
+
+@synthesize maker;
+
+- (void)viewDidLoad {
+    [super viewDidLoad];
+    
+//    progressHUD = [[MBProgressHUD alloc] initWithView:self.view];
+//    progressHUD.labelText = @"waiting...";
+//    progressHUD.mode = MBProgressHUDModeIndeterminate;
+    
+    AppDelegate *app = [[AppDelegate alloc] init];
+    app = [[UIApplication sharedApplication] delegate];
+//    self.userlatitude = app.latitude;
+//    self.userlongtitude = app.longitude;
+    self.lblPolygonName.text = self.strPolygonName;
+    self.locationManager = [[CLLocationManager alloc] init];
+    self.locationManager.delegate = self;
+    self.locationManager.distanceFilter = kCLDistanceFilterNone;
+    self.locationManager.desiredAccuracy = kCLLocationAccuracyBest;
+    
+    maker = [[GMSMarker alloc] init];
+    self.mapView.delegate = self;
+    
+    [self mapviewSetup];
+    [self.view addSubview:progressHUD];
+    
+}
+
+// MapView INIT method
+
+- (void) mapviewSetup{
+    
+    float latitude = [self.userlatitude floatValue];
+    float longtitude = [self.userlongtitude floatValue];
+    
+    GMSCameraPosition *camera = [GMSCameraPosition cameraWithLatitude: 37.7658 longitude : -122.431297 zoom:12.5];
+    self.mapView.settings.myLocationButton = YES;
+    self.mapView.camera = camera;
+    self.mapView.myLocationEnabled = NO;
+    
+    //maker definition part.
+    maker1 = [[GMSMarker alloc] init];
+    maker1.position = CLLocationCoordinate2DMake(latitude, longtitude);
+    maker1.map = self.mapView;
+    
+    // mapview overlayout part
+    CLLocationCoordinate2D southEast = CLLocationCoordinate2DMake(37.708253,-122.356899);
+    CLLocationCoordinate2D notthEast = CLLocationCoordinate2DMake(37.811581,-122.514793);
+    GMSCoordinateBounds *overlayBound = [[GMSCoordinateBounds alloc] initWithCoordinate:southEast coordinate:notthEast];
+    UIImage *image = [UIImage imageNamed:@"Polygon"];
+    GMSGroundOverlay *overlay = [GMSGroundOverlay groundOverlayWithBounds:overlayBound icon:image];
+    overlay.map = self.mapView;
+    [self requestLocation:self.userlatitude logitude:self.userlongtitude];
+    
+}
+
+- (void) requestLocation : (NSString *) latitude logitude : (NSString *) longitude {
+    
+    float lat = [latitude floatValue];
+    float longit = [longitude floatValue];
+    CLLocation *location = [[CLLocation alloc] initWithLatitude:lat longitude:longit];
+//    [progressHUD show:YES];
+//    [[PolygonAPI sharedManager] RestricID:latitude longtitude:longitude  onSuccess:^(id json) {
+//        
+//        message = [json objectForKey:@"message"];
+//        NSDictionary *locationData = [json objectForKey:@"location"];
+//        ID = [locationData objectForKey:@"location_name"];
+//        self.DistrictID = [locationData objectForKey:@"id"];
+//        NSLog(@" success??? %@ , %@ ,%@" , message , self.DistrictID ,ID);
+//        
+//        [progressHUD hide:YES];
+//        [self getlocationName:location];
+//        
+//        
+//    } onFailure:^(NSInteger statusCode, id json) {
+//        
+//        [progressHUD hide:YES];
+//    }];
+//    
+    
+}
+
+- (void) requestBusinessList{
+    
+//    [[PolygonAPI sharedManager] BusinessList:self.DistrictID Sort:@"" latitude:tapLatitude longtitude:tapLongtitude onSuccess:^(id json) {
+//        
+//        self.businessList = (NSArray *)json;
+//        
+//    } onFailure:^(NSInteger statusCode, id json) {
+//        
+//        NSLog(@"%ld", (long)statusCode);
+//    }];
+}
+
+//- (void)mapView:(GMSMapView *)mapView didTapAtCoordinate:(CLLocationCoordinate2D)coordinate {
+//    
+//   
+//    tapLatitude = [NSString stringWithFormat:@"%lf",coordinate.latitude];
+//    tapLongtitude = [NSString stringWithFormat:@"%lf",coordinate.longitude];
+//    [self requestLocation:tapLatitude logitude:tapLongtitude];
+//    maker.position = CLLocationCoordinate2DMake(coordinate.latitude, coordinate.longitude);
+//    maker.icon = [UIImage imageNamed:@"marker"];
+//    maker.map = self.mapView;
+//    
+//}
+- (void)didReceiveMemoryWarning {
+    [super didReceiveMemoryWarning];
+    
+}
+
+- (void) getlocationName :(CLLocation *) location
+{
+    
+    CLGeocoder *geocoder = [[CLGeocoder alloc] init];
+    [geocoder reverseGeocodeLocation:location completionHandler:^(NSArray *placemarks, NSError * error) {
+        
+        if (error == nil) {
+            
+            CLPlacemark *placeMark = [placemarks lastObject];
+            namethrough = placeMark.thoroughfare;
+            postalCode = placeMark.postalCode;
+            nameNeighborhood = placeMark.locality;
+            nameSublocality = placeMark.subLocality;
+            nameArea = placeMark.administrativeArea;
+            NSLog(@"%@ %@ , %@  , %@  ,%@" , nameSublocality, nameArea , namethrough , postalCode , nameNeighborhood);
+            if (![city  isEqual: @"San Francisco"]) {
+                
+                if ([nameNeighborhood  isEqual: @"San Francisco"]) {
+                    
+                    self.lblPolygonName.text = ID;
+                }else
+                {
+                    self.lblPolygonName.text = nameNeighborhood;
+                    
+                }
+            }
+           
+        }
+    }];
+
+}
+
+// if user live no San Francisco ,  Polygon will show message.
+
+- (IBAction)onbtnForwardClicked:(id)sender {
+    
+    self.strPolygonName = self.lblPolygonName.text;
+    
+    if ([nameNeighborhood  isEqual: @"San Francisco"]) {
+        
+        if (self.lblPolygonName.text == (id)[NSNull null] || self.lblPolygonName.text.length == 0) {
+            
+            UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil message:@"POLYGON name is not available at this location. Please try again."
+                                                           delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+            
+            [alert show];
+            
+            }else{
+            
+//                [progressHUD show:YES];
+//                [[PolygonAPI sharedManager] BusinessList:self.DistrictID Sort:@"" latitude:self.userlatitude longtitude:self.userlongtitude onSuccess:^(id json) {
+//                    
+//                    self.businessList = (NSArray *)json;
+//                    [self performSegueWithIdentifier:@"PolygonViewSegue" sender:self];
+//                    [progressHUD hide:YES];
+//                    
+//                } onFailure:^(NSInteger statusCode, id json) {
+//                    
+//                    NSLog(@"%ld", (long)statusCode);
+//                }];
+
+                
+           }
+    }
+    else{
+        
+        UIAlertView *alert = [[UIAlertView alloc] initWithTitle:nil message:@"POLYGON is not available in your city. Please select the polygon in San Francisco to see the Promoters."
+                                          delegate:self cancelButtonTitle:@"OK" otherButtonTitles:nil, nil];
+        
+        [alert show];
+
+    }
+}
+
+//
+
+//- (BOOL) didTapMyLocationButtonForMapView:(GMSMapView *)mapView
+//{
+//    maker.map = nil;
+//    maker = [[GMSMarker alloc] init];
+//    CLLocation *userLocation = [[AppDelegate appDelegate] getLocation];
+//    CLLocationCoordinate2D userCoordinate = [userLocation coordinate];
+//    maker1.position = userCoordinate;
+//    GMSCameraPosition *camera = [GMSCameraPosition cameraWithLatitude: userCoordinate.latitude longitude : userCoordinate.longitude zoom:12.5];
+//    NSLog(@"%lf %lf" , userCoordinate.latitude , userCoordinate.longitude);
+//    self.userlatitude = [NSString stringWithFormat:@"%lf",userCoordinate.latitude];
+//    self.userlongtitude = [NSString stringWithFormat:@"%lf",userCoordinate.longitude];
+//    [self requestLocation:[NSString stringWithFormat:@"%lf" ,userCoordinate.latitude] logitude: [NSString stringWithFormat:@"%lf", userCoordinate.longitude]];
+//    maker1.map = self.mapView;
+//    self.mapView.camera = camera;
+//    return YES;
+//    
+//}
+
+- (void) prepareForSegue:(UIStoryboardSegue *)segue sender:(id)sender
+{
+    if ([segue.identifier  isEqual: @"PolygonViewSegue"]) {
+        
+        PolygonViewController *controller = segue.destinationViewController;
+        controller.promoterList = self.businessList;
+        controller.strPolygonName = self.strPolygonName;
+        controller.DistrictID = self.DistrictID;
+        controller.userlatitude = self.userlatitude;
+        controller.userlongitude = self.userlongtitude;
+    }
+    
+}
+
+- (void) unwindForSegue:(UIStoryboardSegue *)unwindSegue towardsViewController:(UIViewController *)subsequentVC
+{
+    
+}
+
+
+@end
